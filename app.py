@@ -1,57 +1,55 @@
-# Copyright 2021 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+import os, json, time
 
-import signal
-import sys
-from types import FrameType
-
-from flask import Flask
-
-from utils.logging import logger
+from flask import Flask, request
 
 app = Flask(__name__)
 
+from google.cloud import bigquery
 
 @app.route("/", methods=['GET', 'POST'])
 def hello_world():
     """Example Hello World route."""
 
-    # print out the data
     # print(request.method)
     # print(request.data)
     
+    payload = json.loads(request.data)
+    print(payload)
+    file_name = payload['name']
+    bucket_name = payload['bucket']
+    
+    # Construct a BigQuery client object.
+    client = bigquery.Client()
+
+    # TODO(developer): Set table_id to the ID of the table to create.
+    # table_id = "your-project.your_dataset.your_table_name"
+    table_id = f"cloud-run-tut-397520.cloud_run_tut_dataset.iris"
+
+    job_config = bigquery.LoadJobConfig(
+        schema=[
+            bigquery.SchemaField("Id", "INT64"),
+            bigquery.SchemaField("SepalLengthCm", "FLOAT64"),
+            bigquery.SchemaField("SepalWidthCm", "FLOAT64"),
+            bigquery.SchemaField("PetalLengthCm", "FLOAT64"),
+            bigquery.SchemaField("PetalWidthCm", "FLOAT64"),
+            bigquery.SchemaField("Species", "STRING"),
+        ],
+        skip_leading_rows=1,
+        # The source format defaults to CSV, so the line below is optional.
+        source_format=bigquery.SourceFormat.CSV,
+    )
+    uri = f"gs://cloud_run_tuts/iris.csv"
+
+    load_job = client.load_table_from_uri(
+        uri, table_id, job_config=job_config
+    )  # Make an API request.
+
+    load_job.result()  # Waits for the job to complete.
+
+    destination_table = client.get_table(table_id)  # Make an API request.
+    print("Loaded {} rows.".format(destination_table.num_rows))
+    
     return f"Hello World!!!@@@!!!"
 
-
-def shutdown_handler(signal_int: int, frame: FrameType) -> None:
-    logger.info(f"Caught Signal {signal.strsignal(signal_int)}")
-
-    from utils.logging import flush
-
-    flush()
-
-    # Safely exit program
-    sys.exit(0)
-
-
 if __name__ == "__main__":
-    # Running application locally, outside of a Google Cloud Environment
-
-    # handles Ctrl-C termination
-    signal.signal(signal.SIGINT, shutdown_handler)
-
-    app.run(host="localhost", port=8080, debug=True)
-else:
-    # handles Cloud Run container termination
-    signal.signal(signal.SIGTERM, shutdown_handler)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
