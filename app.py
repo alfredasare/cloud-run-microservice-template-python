@@ -28,8 +28,8 @@ def hello_world():
     """Example Hello World route."""
 
     # print out the data
-    print(request.method)
-    print(request.data)
+    # print(request.method)
+    # print(request.data)
     
     return f"Hello World!!!@@@!!!"
 
