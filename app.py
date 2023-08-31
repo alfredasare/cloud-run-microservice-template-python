@@ -38,7 +38,7 @@ def hello_world():
         # The source format defaults to CSV, so the line below is optional.
         source_format=bigquery.SourceFormat.CSV,
     )
-    uri = f"gs://cloud_run_tuts/iris.csv"
+    uri = f"gs://cloud_run_tuts/Iris.csv"
 
     load_job = client.load_table_from_uri(
         uri, table_id, job_config=job_config
