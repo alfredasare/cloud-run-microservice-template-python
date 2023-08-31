@@ -23,15 +23,15 @@ from utils.logging import logger
 app = Flask(__name__)
 
 
-@app.route("/")
-def hello() -> str:
-    # Use basic logging with custom fields
-    logger.info(logField="custom-entry", arbitraryField="custom-entry")
+@app.route("/", methods=['GET', 'POST'])
+def hello_world():
+    """Example Hello World route."""
 
-    # https://cloud.google.com/run/docs/logging#correlate-logs
-    logger.info("Child logger with trace Id.")
-
-    return "Hello, World!!!"
+    // print out the data
+    print(request.method)
+    print(request.data)
+    
+    return f"Hello World!!!@@@!!!"
 
 
 def shutdown_handler(signal_int: int, frame: FrameType) -> None:
