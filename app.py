@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 
 @app.route("/", methods=['GET', 'POST'])
-def hello_world():
+def hello():
     """Example Hello World route."""
 
     // print out the data
